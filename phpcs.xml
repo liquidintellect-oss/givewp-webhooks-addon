@@ -1,0 +1,235 @@
+<?xml version="1.0"?>
+<ruleset name="GiveWP Webhooks">
+    <description>WordPress Coding Standards for GiveWP Webhooks</description>
+
+    <!-- Files to check -->
+    <file>givewp-webhooks.php</file>
+    <file>uninstall.php</file>
+    <file>includes/</file>
+    <file>tests/</file>
+
+    <!-- Only check PHP files -->
+    <arg name="extensions" value="php"/>
+
+    <!-- Show progress and use colors -->
+    <arg value="ps"/>
+    <arg name="colors"/>
+
+    <!-- WordPress ruleset -->
+    <rule ref="WordPress"/>
+
+    <!-- Plugin requires PHP 7.4+ -->
+    <config name="testVersion" value="7.4-"/>
+
+    <!-- Text domain for i18n checks -->
+    <rule ref="WordPress.WP.I18n">
+        <properties>
+            <property name="text_domain" type="array">
+                <element value="givewp-webhooks"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!-- GiveWP's own custom capability, used for the settings page. -->
+    <rule ref="WordPress.WP.Capabilities">
+        <properties>
+            <property name="custom_capabilities" type="array">
+                <element value="manage_give_settings"/>
+            </property>
+        </properties>
+    </rule>
+
+    <!--
+        Method naming.
+
+        This plugin's classes (under includes/) are namespaced (GiveWebhooks\...)
+        and use camelCase static helper methods following PSR-1/PSR-2 rather than
+        the WordPress snake_case convention, so the method-naming rule is relaxed
+        for includes/ and tests/.
+    -->
+    <rule ref="WordPress.NamingConventions.ValidFunctionName.MethodNameInvalid">
+        <exclude-pattern>includes/*</exclude-pattern>
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Class-file-name convention.
+
+        This sniff derives the expected filename by lowercasing the class name and
+        prepending "class-" - it assumes WordPress's underscore-separated naming
+        (e.g. Give_Payment -> class-give-payment.php). This plugin's classes use
+        namespaced multi-word PascalCase (e.g. DonationListener), which the sniff
+        can only map to a filename with no word separators ("class-donationlistener.php"),
+        not the readable hyphenated filenames actually used here
+        ("class-donation-listener.php"). Relaxed for includes/ and test stub files
+        for the same reason.
+    -->
+    <rule ref="WordPress.Files.FileName.InvalidClassFileName">
+        <exclude-pattern>includes/*</exclude-pattern>
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        tests/Fixtures/GiveStubs.php and WpdbStub.php use PascalCase filenames
+        (matching their class names) and, in GiveStubs.php, multiple namespace
+        blocks in one file to stand in for several real GiveWP/vendor namespaces
+        at once - both are deliberate for these fixture-only files.
+    -->
+    <rule ref="WordPress.Files.FileName.NotHyphenatedLowercase">
+        <exclude-pattern>tests/Fixtures/*</exclude-pattern>
+    </rule>
+    <rule ref="Universal.Namespaces.DisallowCurlyBraceSyntax">
+        <exclude-pattern>tests/Fixtures/GiveStubs.php</exclude-pattern>
+    </rule>
+    <rule ref="Universal.Namespaces.OneDeclarationPerFile">
+        <exclude-pattern>tests/Fixtures/GiveStubs.php</exclude-pattern>
+    </rule>
+
+    <!-- Multiple classes per file is standard for inline test fixtures / stubs. -->
+    <rule ref="Generic.Files.OneObjectStructurePerFile">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Spy-stub methods must mirror real API signatures, so unused parameters
+         in stub bodies are unavoidable. -->
+    <rule ref="Generic.CodeAnalysis.UnusedFunctionParameter">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- @package tag is not meaningful in test bootstrap / test-case files. -->
+    <rule ref="Squiz.Commenting.FileComment.MissingPackageTag">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- File docblock is not required in test files (PHPUnit convention). -->
+    <rule ref="Squiz.Commenting.FileComment.Missing">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Class docblock is not required in test files. -->
+    <rule ref="Squiz.Commenting.ClassComment.Missing">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Inline associative arrays are common in PHPUnit / WP_Mock test calls.
+        Requiring every such array to be multi-line would hurt readability in
+        test files.
+    -->
+    <rule ref="WordPress.Arrays.ArrayDeclarationSpacing.AssociativeArrayFound">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Spy-class properties are typed in the declaration; a separate
+         /** @var … */ docblock adds no value in test fixtures. -->
+    <rule ref="Squiz.Commenting.VariableComment.Missing">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Spy-stub methods don't need prose docblocks; their signatures already
+         document the contract. -->
+    <rule ref="Squiz.Commenting.FunctionComment.Missing">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Existing partial docblocks are acceptable in test fixture helpers. -->
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamTag">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- /** @test */ is the canonical PHPUnit single-annotation style. -->
+    <rule ref="Generic.Commenting.DocComment.MissingShort">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!-- Section-marker comments above setUp/tearDown are fine. -->
+    <rule ref="Squiz.Commenting.ClassComment.WrongStyle">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+    <rule ref="Squiz.Commenting.FunctionComment.WrongStyle">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        bootstrap.php must stub WordPress functions using their exact WP names,
+        some of which are not snake_case (e.g. dbDelta).
+    -->
+    <rule ref="WordPress.NamingConventions.ValidFunctionName.FunctionNameInvalid">
+        <exclude-pattern>tests/bootstrap.php</exclude-pattern>
+    </rule>
+
+    <!--
+        bootstrap.php intentionally mixes function stubs and class stubs.
+    -->
+    <rule ref="Universal.Files.SeparateFunctionsFromOO.Mixed">
+        <exclude-pattern>tests/bootstrap.php</exclude-pattern>
+    </rule>
+
+    <!--
+        bootstrap.php's checked()/wp_nonce_field() stubs intentionally mirror real
+        WordPress core function signatures and output exactly (including the
+        reserved-keyword $echo parameter and raw, unescaped HTML attribute/markup
+        output) - that's the whole point of a stub: behave like the real function.
+    -->
+    <rule ref="Universal.NamingConventions.NoReservedKeywordParameterNames.echoFound">
+        <exclude-pattern>tests/bootstrap.php</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.Security.EscapeOutput.OutputNotEscaped">
+        <exclude-pattern>tests/bootstrap.php</exclude-pattern>
+    </rule>
+
+    <!--
+        Each test's setUp() reassigns the global $wpdb stub to reset its recorded
+        calls between tests - this is the standard WP_Mock-style pattern for
+        isolating database-call assertions per test, not a real WordPress global
+        being overridden.
+    -->
+    <rule ref="WordPress.WP.GlobalVariablesOverride.Prohibited">
+        <exclude-pattern>tests/bootstrap.php</exclude-pattern>
+        <exclude-pattern>tests/Unit/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Inline test comments like "// status=publish" don't need trailing punctuation.
+    -->
+    <rule ref="Squiz.Commenting.InlineComment.InvalidEndChar">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Test stub / spy classes use camelCase property names following the
+        PSR-4 and PHPUnit naming conventions used throughout the test suite.
+        Snake_case is not enforced for test fixture internals.
+    -->
+    <rule ref="WordPress.NamingConventions.ValidVariableName.PropertyNotSnakeCase">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+    <rule ref="WordPress.NamingConventions.ValidVariableName.UsedPropertyNotSnakeCase">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        Helper methods in test classes use concise @param annotations without
+        full prose comments — the type and variable name are self-explanatory.
+    -->
+    <rule ref="Squiz.Commenting.FunctionComment.MissingParamComment">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        PHPDoc type hints in test helpers may use PHPStan/Psalm syntax
+        (list<T>, array<K,V>) that differs from what PHPCS expects.
+    -->
+    <rule ref="Squiz.Commenting.FunctionComment.IncorrectTypeHint">
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+
+    <!--
+        strip_tags() in test-only sanitize stubs is fine, and json_encode() is
+        acceptable in test helpers (e.g. mocking wp_json_encode return values).
+    -->
+    <rule ref="WordPress.WP.AlternativeFunctions">
+        <exclude-pattern>tests/bootstrap.php</exclude-pattern>
+        <exclude-pattern>tests/*</exclude-pattern>
+    </rule>
+</ruleset>
